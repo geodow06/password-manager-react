@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Input from './Input';
 import axiosConfig from '../Config/axios';
+import authenticationService from '../Services/authenticationService'
 class Form extends Component {
     
     constructor(props) {
@@ -13,7 +14,7 @@ class Form extends Component {
             }
         } else {
             this.state = { errcount: 0 ,
-            jwt: ''}
+            response: ''}
         }
     }
  
@@ -35,43 +36,38 @@ class Form extends Component {
         }
     }
 
-    handleSubmit = (event) => {
-        event.preventDefault()
-        if(!this.state.errcount) {
-            // const data = new FormData(this.form)
-            console.log(this.form)
-            console.log(this.form.password)
-            if(this.form.username&&this.form.password){
-                axiosConfig({
-                    method:'post',
-                    url: '/login',
-                    // headers: {'Authorization': 'Bearer'+token},
-                    headers:{ 'Content-Type': 'application/json' },
-                    data: {username:this.form.username.value,password:this.form.password.value}
-                }).then(response => {this.setState({jwt: response.data.jwt})})
-    
-                console.log(this.state.jwt)
-            }
-            
-            // fetch(`http://localhost:8080/${this.form.action}`, {
-            //   method: this.form.method,
-            //   body: new URLSearchParams(data)
-            // })
-
-            // .then(v => {
-            //     if(v.redirected) window.location = v.url
-            // })
-            // .catch(e => console.warn(e))
+    getRequestData = () =>{
+        let values = this.props.inputs
+        let requestData 
+        let i = 0
+        let expression = `requestData = {${values[0].name}:this.form.${values[0].name}.value`
+        for( i===1 ; i<values.length-1; i++){
+            expression+=`,${values[i].name}:this.form.${values[i].name}.value`
         }
+        expression +=`}`
+        eval(expression)
+        return requestData
     }
 
-    // handleSubmit = (event) => {
-    //     event.preventDefault()
-    //     if(!this.state.errcount){
-    //         const data = new FormData(this.form)
-    //         console.log(new URLSearchParams(data).toString)
-    //     }
-    // }
+    handleSubmit = (event) => {
+        event.preventDefault()
+        let requestData = this.getRequestData()
+        if(!this.state.errcount) {
+            if(this.props.action==="login"||this.props.action==="sign-up"){
+                axiosConfig({
+                    method:this.form.method,
+                    url: `${this.props.endpoint}`,
+                    // headers: {'Authorization': 'Bearer'+token},
+                    headers:{ 'Content-Type': 'application/json' },
+                    data: requestData
+                }).then(r => {authenticationService.login(r.data); window.location='/'}) 
+            } else{
+                axiosConfig({
+
+                })
+            }
+        }
+    }
  
     renderError = () => {
         if(this.state.errcount || this.state.failure) {
@@ -102,6 +98,7 @@ Form.propTypes = {
     name: PropTypes.string,
     action: PropTypes.string,
     method: PropTypes.string,
+    endpoint: PropTypes.string,
     inputs: PropTypes.array,
     error: PropTypes.string
   }

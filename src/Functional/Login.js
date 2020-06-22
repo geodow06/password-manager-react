@@ -21,7 +21,8 @@ function Login() {
     const props = {
     name: 'loginForm',
     method: 'POST',
-    action: '/login',
+    action: 'login',
+    endpoint: '/login',
     inputs: inputs
     }
     
